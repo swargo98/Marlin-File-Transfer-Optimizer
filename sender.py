@@ -637,7 +637,7 @@ class PPOOptimizer:
         utility_network = (net_thrpt/self.K ** network_thread)
         utility_write = (write_thrpt/self.K ** write_thread)
 
-        throughput_reward = ((io_thrpt + net_thrpt + write_thrpt)/(3 * configurations['probing_sec'])) / self.stable_bw
+        throughput_reward = ((io_thrpt + net_thrpt + write_thrpt)/3) / self.stable_bw
         thread_penalty = ((read_thread/self.optimal_read_thread) + (network_thread/self.optimal_network_thread) + (write_thread/self.optimal_write_thread))/3
         reward = throughput_reward - 0.3 * thread_penalty
         self.current_reward = reward

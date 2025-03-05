@@ -116,7 +116,7 @@ class SimulatorState:
 class NetworkOptimizationEnv(gym.Env):
     def __init__(self, black_box_function, state, history_length=5):
         super(NetworkOptimizationEnv, self).__init__()
-        self.thread_limits = [2, 20]  # Threads can be between 1 and 10
+        self.thread_limits = [1, 20]  # Threads can be between 1 and 10
 
         self.action_space = spaces.MultiDiscrete([5, 5, 5])
         obs_dim = 5 + 7 * history_length
@@ -638,7 +638,7 @@ def train_ppo(env, agent, max_episodes=1000, is_inference=False):
         if episode % 10 == 0:
             avg_reward = np.mean(total_rewards[-10:])
             print(f"Episode {episode}\tAverage Reward: {avg_reward:.2f}")
-            save_model(agent, "models/finetune_v" + configurations['model_version'] +"_policy_"+ str(episode) +".pth", "models/finetune_v' + configurations['model_version'] +'_value_"+ str(episode) +".pth")
+            save_model(agent, "models/finetune_v" + configurations['model_version'] +"_policy_"+ str(episode) +".pth", "models/finetune_v" + configurations['model_version'] +"_value_"+ str(episode) +".pth")
             print("Model saved successfully.")
     return total_rewards
 
