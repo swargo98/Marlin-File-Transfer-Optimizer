@@ -509,7 +509,7 @@ class PPOOptimizer:
         network_thrpt = self.current_network_throughput
         read_thread = self.current_read_thread
         network_thread = self.current_network_thread
-        free_disk = (memory_limit - self.used_disk)
+        free_disk = self.used_disk
 
         # print(f"State -- Read: {self.current_read_thread}, Network: {self.current_network_thread}, Write: {write_thread}")
 

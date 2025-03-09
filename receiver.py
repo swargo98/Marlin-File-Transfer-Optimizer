@@ -282,7 +282,7 @@ def start_server(max_cc, black_box_function, logger, verbose=True):
         nonlocal prev_thrpt, prev_thread, used, curr_thrpt, curr_thread
         thrpt = curr_thrpt
         thread_change = (curr_thread - prev_thread)/prev_thread if prev_thread > 0 else 0
-        free  = (memory_limit - used)
+        free  = used
         return [thrpt, thread_change, free, curr_thread]
     
     @dispatcher.public
