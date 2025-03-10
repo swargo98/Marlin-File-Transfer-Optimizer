@@ -168,83 +168,51 @@ class NetworkOptimizationEnv(gym.Env):
         # Return initial state as NumPy array
         return self.state.to_array()
 
-class ResidualBlock(nn.Module):
-    def __init__(self, size, activation=nn.ReLU):
-        super(ResidualBlock, self).__init__()
-        self.fc1 = nn.Linear(size, size)
-        self.fc2 = nn.Linear(size, size)
-        self.activation = activation()
-
-    def forward(self, x):
-        # Save the input (for the skip connection)
-        residual = x
-        
-        # Pass through two linear layers with activation
-        out = self.fc1(x)
-        out = self.activation(out)
-        out = self.fc2(out)
-        
-        # Add the original input (residual connection)
-        out += residual
-        
-        # Optionally add another activation at the end
-        out = self.activation(out)
-        return out
-    
 class PolicyNetworkContinuous(nn.Module):
-    def __init__(self, state_dim, action_dim):
+    def __init__(self, state_dim, action_dim, num_heads=4, num_layers=2):
         super(PolicyNetworkContinuous, self).__init__()
-        self.input_layer = nn.Linear(state_dim, 256)
-        
-        self.residual_blocks = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(256, 256),
-                nn.LayerNorm(256),
-                nn.ReLU(),
-                nn.Linear(256, 256),
-                nn.LayerNorm(256)
-            ) for _ in range(3)
-        ])
+        self.embedding = nn.Linear(state_dim, 256)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=256, nhead=num_heads)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         
         self.mean_layer = nn.Linear(256, action_dim)
         self.log_std = nn.Parameter(torch.zeros(action_dim))
         self.to(device)
         
     def forward(self, state):
-        x = torch.tanh(self.input_layer(state))
-        
-        # Residual connections
-        for block in self.residual_blocks:
-            residual = x
-            x = block(x)
-            x = torch.tanh(x + residual)
-        
+        x = torch.tanh(self.embedding(state))
+        x = x.unsqueeze(0)  # Add sequence dimension
+        x = self.transformer(x)
+        x = x.squeeze(0)
         mean = self.mean_layer(x)
         log_std = torch.clamp(self.log_std, -20, 2)
         std = torch.exp(log_std)
         return mean, std
-
+    
 class ValueNetwork(nn.Module):
-    def __init__(self, state_dim):
+    def __init__(self, state_dim, num_heads=4):
         super(ValueNetwork, self).__init__()
-        self.fc_in = nn.Linear(state_dim, 256)
+        self.embedding = nn.Linear(state_dim, 256)
+        self.attention = nn.MultiheadAttention(embed_dim=256, num_heads=num_heads)
         
-        # Add a few residual blocks
-        self.res_block1 = ResidualBlock(256, activation=nn.Tanh)
-        self.res_block2 = ResidualBlock(256, activation=nn.Tanh)
-
-        # Output value layer
-        self.fc_out = nn.Linear(256, 1)
+        self.fc_layers = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
         self.to(device)
-
+        
     def forward(self, state):
-        x = self.fc_in(state)
-        x = torch.tanh(x)
+        x = torch.tanh(self.embedding(state))
+        x = x.unsqueeze(0)  # Add sequence dimension
         
-        x = self.res_block1(x)
-        x = self.res_block2(x)
+        # Self-attention
+        attn_output, _ = self.attention(x, x, x)
+        x = attn_output.squeeze(0)
         
-        value = self.fc_out(x)
+        value = self.fc_layers(x)
         return value
 
 class PPOAgentContinuous:

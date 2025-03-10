@@ -107,7 +107,7 @@ class NetworkSystemSimulator:
             self.sender_buffer_in_use += throughput_increase
 
         time_taken = throughput_increase / self.read_throughput_per_thread
-        next_time = time + time_taken + 0.001
+        next_time = time + time_taken + 0.01
         if next_time < 1:
             self.thread_queue.put((next_time, "read"))
 
@@ -127,7 +127,7 @@ class NetworkSystemSimulator:
             self.receiver_buffer_in_use += throughput_increase
 
         time_taken = throughput_increase / self.network_throughput_per_thread
-        next_time = time + time_taken + 0.001
+        next_time = time + time_taken + 0.01
         if next_time < 1:
             self.thread_queue.put((next_time, "network"))
         # print(f"Network Thread end: Network Throughput: {throughput_increase}, Sender Buffer: {self.sender_buffer_in_use}, Receiver Buffer: {self.receiver_buffer_in_use}")
@@ -145,7 +145,7 @@ class NetworkSystemSimulator:
             self.receiver_buffer_in_use -= throughput_increase
 
         time_taken = throughput_increase / self.write_throughput_per_thread
-        next_time = time + time_taken + 0.001
+        next_time = time + time_taken + 0.01
         if next_time < 1:
             self.thread_queue.put((next_time, "write"))
         # print(f"Write Thread: Sender Buffer: {self.sender_buffer_in_use}, Receiver Buffer: {self.receiver_buffer_in_use}")
@@ -375,83 +375,130 @@ class NetworkOptimizationEnv(gym.Env):
         # Return initial state as NumPy array
         return self.state.to_array()
 
-class ResidualBlock(nn.Module):
-    def __init__(self, size, activation=nn.ReLU):
-        super(ResidualBlock, self).__init__()
-        self.fc1 = nn.Linear(size, size)
-        self.fc2 = nn.Linear(size, size)
-        self.activation = activation()
+# class ResidualBlock(nn.Module):
+#     def __init__(self, size, activation=nn.ReLU):
+#         super(ResidualBlock, self).__init__()
+#         self.fc1 = nn.Linear(size, size)
+#         self.fc2 = nn.Linear(size, size)
+#         self.activation = activation()
 
-    def forward(self, x):
-        # Save the input (for the skip connection)
-        residual = x
+#     def forward(self, x):
+#         # Save the input (for the skip connection)
+#         residual = x
         
-        # Pass through two linear layers with activation
-        out = self.fc1(x)
-        out = self.activation(out)
-        out = self.fc2(out)
+#         # Pass through two linear layers with activation
+#         out = self.fc1(x)
+#         out = self.activation(out)
+#         out = self.fc2(out)
         
-        # Add the original input (residual connection)
-        out += residual
+#         # Add the original input (residual connection)
+#         out += residual
         
-        # Optionally add another activation at the end
-        out = self.activation(out)
-        return out
+#         # Optionally add another activation at the end
+#         out = self.activation(out)
+#         return out
     
-class PolicyNetworkContinuous(nn.Module):
-    def __init__(self, state_dim, action_dim):
-        super(PolicyNetworkContinuous, self).__init__()
-        self.input_layer = nn.Linear(state_dim, 256)
+# class PolicyNetworkContinuous(nn.Module):
+#     def __init__(self, state_dim, action_dim):
+#         super(PolicyNetworkContinuous, self).__init__()
+#         self.input_layer = nn.Linear(state_dim, 256)
         
-        self.residual_blocks = nn.ModuleList([
-            nn.Sequential(
-                nn.Linear(256, 256),
-                nn.LayerNorm(256),
-                nn.ReLU(),
-                nn.Linear(256, 256),
-                nn.LayerNorm(256)
-            ) for _ in range(3)
-        ])
+#         self.residual_blocks = nn.ModuleList([
+#             nn.Sequential(
+#                 nn.Linear(256, 256),
+#                 nn.LayerNorm(256),
+#                 nn.ReLU(),
+#                 nn.Linear(256, 256),
+#                 nn.LayerNorm(256)
+#             ) for _ in range(3)
+#         ])
+        
+#         self.mean_layer = nn.Linear(256, action_dim)
+#         self.log_std = nn.Parameter(torch.zeros(action_dim))
+#         self.to(device)
+        
+#     def forward(self, state):
+#         x = torch.tanh(self.input_layer(state))
+        
+#         # Residual connections
+#         for block in self.residual_blocks:
+#             residual = x
+#             x = block(x)
+#             x = torch.tanh(x + residual)
+        
+#         mean = self.mean_layer(x)
+#         log_std = torch.clamp(self.log_std, -20, 2)
+#         std = torch.exp(log_std)
+#         return mean, std
+
+# class ValueNetwork(nn.Module):
+#     def __init__(self, state_dim):
+#         super(ValueNetwork, self).__init__()
+#         self.fc_in = nn.Linear(state_dim, 256)
+        
+#         # Add a few residual blocks
+#         self.res_block1 = ResidualBlock(256, activation=nn.Tanh)
+#         self.res_block2 = ResidualBlock(256, activation=nn.Tanh)
+
+#         # Output value layer
+#         self.fc_out = nn.Linear(256, 1)
+#         self.to(device)
+
+#     def forward(self, state):
+#         x = self.fc_in(state)
+#         x = torch.tanh(x)
+        
+#         x = self.res_block1(x)
+#         x = self.res_block2(x)
+        
+#         value = self.fc_out(x)
+#         return value
+
+class PolicyNetworkContinuous(nn.Module):
+    def __init__(self, state_dim, action_dim, num_heads=4, num_layers=2):
+        super(PolicyNetworkContinuous, self).__init__()
+        self.embedding = nn.Linear(state_dim, 256)
+        encoder_layer = nn.TransformerEncoderLayer(d_model=256, nhead=num_heads)
+        self.transformer = nn.TransformerEncoder(encoder_layer, num_layers=num_layers)
         
         self.mean_layer = nn.Linear(256, action_dim)
         self.log_std = nn.Parameter(torch.zeros(action_dim))
         self.to(device)
         
     def forward(self, state):
-        x = torch.tanh(self.input_layer(state))
-        
-        # Residual connections
-        for block in self.residual_blocks:
-            residual = x
-            x = block(x)
-            x = torch.tanh(x + residual)
-        
+        x = torch.tanh(self.embedding(state))
+        x = x.unsqueeze(0)  # Add sequence dimension
+        x = self.transformer(x)
+        x = x.squeeze(0)
         mean = self.mean_layer(x)
         log_std = torch.clamp(self.log_std, -20, 2)
         std = torch.exp(log_std)
         return mean, std
-
+    
 class ValueNetwork(nn.Module):
-    def __init__(self, state_dim):
+    def __init__(self, state_dim, num_heads=4):
         super(ValueNetwork, self).__init__()
-        self.fc_in = nn.Linear(state_dim, 256)
+        self.embedding = nn.Linear(state_dim, 256)
+        self.attention = nn.MultiheadAttention(embed_dim=256, num_heads=num_heads)
         
-        # Add a few residual blocks
-        self.res_block1 = ResidualBlock(256, activation=nn.Tanh)
-        self.res_block2 = ResidualBlock(256, activation=nn.Tanh)
-
-        # Output value layer
-        self.fc_out = nn.Linear(256, 1)
+        self.fc_layers = nn.Sequential(
+            nn.Linear(256, 128),
+            nn.ReLU(),
+            nn.Linear(128, 64),
+            nn.ReLU(),
+            nn.Linear(64, 1)
+        )
         self.to(device)
-
+        
     def forward(self, state):
-        x = self.fc_in(state)
-        x = torch.tanh(x)
+        x = torch.tanh(self.embedding(state))
+        x = x.unsqueeze(0)  # Add sequence dimension
         
-        x = self.res_block1(x)
-        x = self.res_block2(x)
+        # Self-attention
+        attn_output, _ = self.attention(x, x, x)
+        x = attn_output.squeeze(0)
         
-        value = self.fc_out(x)
+        value = self.fc_layers(x)
         return value
 
 class PPOAgentContinuous:
@@ -712,53 +759,17 @@ if __name__ == '__main__':
         os.remove('throughputs_residual_cl_v1.csv')
 
     oneGB = 1024
-    simulator = NetworkSystemSimulator(sender_buffer_capacity=6.304 * oneGB,
-                                            receiver_buffer_capacity=2.142 * oneGB,
-                                            read_throughput_per_thread=201,
-                                            network_throughput_per_thread=94,
-                                            write_throughput_per_thread=201,
-                                            read_bandwidth=3624,
-                                            write_bandwidth=2214,
-                                            network_bandwidth=1215,
+    simulator = NetworkSystemSimulator(sender_buffer_capacity=6.266 * oneGB,
+                                            receiver_buffer_capacity=2.556 * oneGB,
+                                            read_throughput_per_thread=206,
+                                            network_throughput_per_thread=165,
+                                            write_throughput_per_thread=135,
+                                            read_bandwidth=3862.7,
+                                            write_bandwidth=1753.22,
+                                            network_bandwidth=1195.9,
                                             track_states=True)
     env = NetworkOptimizationEnv(simulator=simulator)
     agent = PPOAgentContinuous(state_dim=8, action_dim=3, lr=1e-4, eps_clip=0.1)
     rewards = train_ppo(env, agent, max_episodes=10000)
     
     plot_rewards(rewards, 'PPO Training Rewards', 'training_rewards_training_residual_cl_v1.pdf')
-
-    inference_count = 5
-    for i in range(inference_count):
-        if os.path.exists('threads_residual_cl_v1.csv'):
-            os.remove('threads_residual_cl_v1.csv')
-        if os.path.exists('throughputs_residual_cl_v1.csv'):
-            os.remove('throughputs_residual_cl_v1.csv')
-
-        optimals, simulator = simulator_generator.generate_simulator(episode=500000)
-
-        # save simulator parameters to a file
-        with open('simulators/simulator_parameters_'+ str(i) +'.csv', 'w') as f:
-            f.write(f"Sender Buffer Capacity, {simulator.sender_buffer_capacity}\n")
-            f.write(f"Receiver Buffer Capacity, {simulator.receiver_buffer_capacity}\n")
-            f.write(f"Read Throughput per Thread, {simulator.read_throughput_per_thread}\n")
-            f.write(f"Network Throughput per Thread, {simulator.network_throughput_per_thread}\n")
-            f.write(f"Write Throughput per Thread, {simulator.write_throughput_per_thread}\n")
-            f.write(f"Read Bandwidth, {simulator.read_bandwidth}\n")
-            f.write(f"Write Bandwidth, {simulator.write_bandwidth}\n")
-            f.write(f"Network Bandwidth, {simulator.network_bandwidth}\n")
-
-        env = NetworkOptimizationEnv(simulator=simulator)
-        agent = PPOAgentContinuous(state_dim=8, action_dim=3, lr=1e-4, eps_clip=0.1)
-
-        policy_model = 'training_residual_cl_v1_policy_400000.pth'
-        value_model = 'training_residual_cl_v1_value_400000.pth'
-
-        print(f"Loading model... Value: {value_model}, Policy: {policy_model}")
-        load_model(agent, "models/"+policy_model, "models/"+value_model)
-        print("Model loaded successfully.")
-
-        rewards = train_ppo(env, agent, max_episodes=100)
-
-        plot_rewards(rewards, 'PPO Inference Rewards', 'rewards/inference_rewards_training_residual_cl_v1_'+ str(i) +'.pdf')
-        plot_threads_csv('threads_residual_cl_v1.csv', optimals, 'threads/inference_threads_plot_training_residual_cl_v1_'+ str(i) +'.png')
-        plot_throughputs_csv('throughputs_residual_cl_v1.csv', optimals, 'throughputs/inference_throughputs_plot_training_residual_cl_v1_'+ str(i) +'.png') 
