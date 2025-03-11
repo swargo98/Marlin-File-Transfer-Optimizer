@@ -110,10 +110,10 @@ class NetworkOptimizationEnv(gym.Env):
         print(new_thread_counts)
         
         # to get random values 
-        # read_thread = np.random.randint(3, 19)
-        # network_thread = np.random.randint(3, 19)
-        # write_thread = np.random.randint(3, 19)
-        # new_thread_counts = [read_thread, network_thread, write_thread]
+        read_thread = np.random.randint(3, 19)
+        network_thread = np.random.randint(3, 19)
+        write_thread = np.random.randint(3, 19)
+        new_thread_counts = [read_thread, network_thread, write_thread]
         
         # Compute utility and update state
         utility, self.state = self.get_utility_value(new_thread_counts)
@@ -339,7 +339,7 @@ def train_ppo(env, agent, max_episodes=1000, is_inference=False):
             avg_reward = np.mean(total_rewards[-10:])
             print(f"Episode {episode}\tAverage Reward: {avg_reward:.2f}")
         if episode % 10 == 0:
-            save_model(agent, "models/residual_cl_finetune_policy_"+ str(episode) +".pth", "models/residual_cl_finetune_value_"+ str(episode) +".pth")
+            save_model(agent, "models/residual_cl_random_policy_"+ str(episode) +".pth", "models/residual_cl_random_value_"+ str(episode) +".pth")
             print("Model saved successfully.")
     return total_rewards
 

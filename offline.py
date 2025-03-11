@@ -291,7 +291,7 @@ class NetworkOptimizationEnv(gym.Env):
                                                 track_states=True)
         if simulator is not None:
             self.simulator = simulator
-        self.thread_limits = [1, 20]  # Threads can be between 1 and 10
+        self.thread_limits = [1, 22]  # Threads can be between 1 and 10
 
         # Continuous action space: adjustments between -5.0 and +5.0
         self.action_space = spaces.Box(low=np.array([self.thread_limits[0]] * 3),
@@ -615,7 +615,7 @@ def train_ppo(env, agent, max_episodes=1000):
             avg_reward = np.mean(total_rewards[-100:])
             print(f"Episode {episode}\tAverage Reward: {avg_reward:.2f}")
         if episode % 100 == 0:
-            save_model(agent, "models/residual_cl_v1_policy_"+ str(episode) +".pth", "models/residual_cl_v1_value_"+ str(episode) +".pth")
+            save_model(agent, "models/write_bn_policy_"+ str(episode) +".pth", "models/write_bn_value_"+ str(episode) +".pth")
             print("Model saved successfully.")
     return total_rewards
 
@@ -759,14 +759,14 @@ if __name__ == '__main__':
         os.remove('throughputs_residual_cl_v1.csv')
 
     oneGB = 1024
-    simulator = NetworkSystemSimulator(sender_buffer_capacity=6.266 * oneGB,
-                                            receiver_buffer_capacity=2.556 * oneGB,
-                                            read_throughput_per_thread=206,
-                                            network_throughput_per_thread=165,
-                                            write_throughput_per_thread=135,
-                                            read_bandwidth=3862.7,
+    simulator = NetworkSystemSimulator(sender_buffer_capacity=6.4 * oneGB,
+                                            receiver_buffer_capacity=6.8 * oneGB,
+                                            read_throughput_per_thread=201,
+                                            network_throughput_per_thread=152,
+                                            write_throughput_per_thread=71,
+                                            read_bandwidth=3816.82,
                                             write_bandwidth=1753.22,
-                                            network_bandwidth=1195.9,
+                                            network_bandwidth=1206.1,
                                             track_states=True)
     env = NetworkOptimizationEnv(simulator=simulator)
     agent = PPOAgentContinuous(state_dim=8, action_dim=3, lr=1e-4, eps_clip=0.1)

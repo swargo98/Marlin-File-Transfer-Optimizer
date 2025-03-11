@@ -133,3 +133,6 @@ test-output
 **/*.pem
 **/*.json
 logs/*.logger
+
+/models/
+/src/
