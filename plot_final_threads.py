@@ -4,7 +4,7 @@ import matplotlib.pyplot as plt
 # -------------------------------------------------
 # 1. Define model types and bottlenecks
 # -------------------------------------------------
-types = ["ppo_attention", "ppo_marlin"]  # Adjust or add more as needed
+types = ["ppo_residual", "ppo_marlin"]  # Adjust or add more as needed
 bottlenecks = ["read_bn", "network_bn", "write_bn"]
 
 # A helper dict to make your subplot titles more readable
@@ -24,9 +24,9 @@ type_labels = {
 # 2. Define link speeds (throughput per thread) for each bottleneck
 # -------------------------------------------------
 link_speeds = {
-    "network_bn": {"read": 200, "network": 90,  "write": 200},
-    "read_bn":    {"read": 140, "network": 165, "write": 200},
-    "write_bn":   {"read": 205, "network": 165, "write": 135},
+    "network_bn": {"read": 205, "network": 75,  "write": 195},
+    "read_bn":    {"read": 80, "network": 160, "write": 200},
+    "write_bn":   {"read": 200, "network": 150, "write": 70},
 }
 
 # -------------------------------------------------
@@ -35,9 +35,9 @@ link_speeds = {
 file_paths = {}
 for t in types:
     for b in bottlenecks:
-        file_paths[f"read_{t}_{b}"]    = f"logs_final/timed_log_read_{t}_{b}.csv"
-        file_paths[f"network_{t}_{b}"] = f"logs_final/timed_log_network_{t}_{b}.csv"
-        file_paths[f"write_{t}_{b}"]   = f"logs_final/timed_log_write_{t}_{b}.csv"
+        file_paths[f"read_{t}_{b}"]    = f"logs_final_2/timed_log_read_{t}_{b}.csv"
+        file_paths[f"network_{t}_{b}"] = f"logs_final_2/timed_log_network_{t}_{b}.csv"
+        file_paths[f"write_{t}_{b}"]   = f"logs_final_2/timed_log_write_{t}_{b}.csv"
 
 # -------------------------------------------------
 # 4. Load CSV data into a dictionary
@@ -94,7 +94,7 @@ for row_idx, t in enumerate(types):
         
         # Set the title only on the top row
         if row_idx == 0:
-            ax.set_title(f"{bottleneck_labels[b]}\n(Link Bandwidth = 1200Mbps)")
+            ax.set_title(f"{bottleneck_labels[b]}\n(Link Bandwidth = 1270Mbps)")
         
         # Label the row on the left side with type and concurrency label
         if col_idx == 0:

@@ -2,8 +2,9 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Define types for comparison
-types = ["ppo_residual", "ppo_marlin", "ppo_mgd"]  # Add more types as needed
-extension = 'network_bn'
+types = ["ppo_residual", "ppo_marlin"]  # Add more types as needed
+# types = ["ppo_marlin", "ppo_mgd"]  # Add more types as needed
+extension = 'write_bn_60'
 # Generate file paths dynamically
 file_paths = {}
 for t in types:
@@ -30,7 +31,7 @@ def generate_plot(metric, x_axis, y_axis, ylabel, filename):
             if df_key in data:
                 df = data[df_key]
                 # Compute the rolling average of 5 points for the y_axis metric
-                y_values = df[y_axis].rolling(window=5).mean()
+                y_values = df[y_axis].rolling(window=10).mean()
                 # Since the rolling average introduces NaNs in the first few rows, align x-axis accordingly
                 x_values = df[x_axis]
                 axes[i].plot(x_values, y_values, label=f"{t}")

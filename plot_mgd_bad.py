@@ -5,7 +5,7 @@ import matplotlib.pyplot as plt
 file_paths = {
     "read": "logs_final/timed_log_read_ppo_mgd_network_bn.csv",
     "network": "logs_final/timed_log_network_ppo_mgd_network_bn.csv",
-    "write": "logs_final/timed_log_write_ppo_mgd_network_bn.csv",
+    # "write": "logs_final/timed_log_write_ppo_mgd_network_bn.csv",
 }
 
 # Load all data into a dictionary
@@ -54,13 +54,13 @@ if "falcon" in data:
 
 # Set labels, legend, and layout
 plt.title("Link Bandwidth = 1000Mbps")
-plt.xlabel("Sample Transfer Number")
-plt.ylabel("Concurrency (5-point rolling average)")
+plt.xlabel("Durartion (Seconds)")
+plt.ylabel("Concurrency")
 plt.legend()
 plt.tight_layout()
 
 # Save the figure to a PNG file
-plt.savefig("plot_mgd_bad.png", dpi=300)  # You can adjust dpi as needed
+plt.savefig("plot_mgd_bad.pdf", dpi=300, format='pdf')
 
 # Display the plot
 plt.show()

@@ -2,7 +2,7 @@ import pandas as pd
 import matplotlib.pyplot as plt
 
 # Define types for comparison
-types = ["ppo_residual_network_bn"]  # Add more types as needed
+types = ["ppo_residual_network_bn_std"]  # Add more types as needed
 
 # Generate file paths dynamically
 file_paths = {}
@@ -47,7 +47,7 @@ data['sender'] = pd.read_csv(f"shared_memory_log_sender_{t}.csv", header=None, n
 data['receiver'] = pd.read_csv(f"shared_memory_log_receiver_{t}.csv", header=None, names=["used_memory"])
 
 for key, df in data.items():
-    top[key] = df["used_memory"].nlargest(101)
+    top[key] = df["used_memory"].nlargest(1)
 
 # Print the median of the top 5 values for each key
 print(" Highest used memory")
