@@ -74,9 +74,9 @@ for key in plot_order:
             label=plot_styles[key]["label"]
         )
 
-ax_left.set_title("Link Bandwidth = 1000Mbps\n(MGD Concurrency)")
+# ax_left.set_title("Link Bandwidth = 1000Mbps\n(MGD Concurrency)")
 ax_left.set_xlabel("Duration (Seconds)")
-ax_left.set_ylabel("Concurrency (5-point rolling avg)")
+ax_left.set_ylabel("Concurrency")
 ax_left.legend()
 ax_left.grid(True)
 
@@ -95,10 +95,10 @@ if not df_falcon.empty:
     
     # Plot throughput on the right subplot (left y-axis)
     ax_right.set_xlabel("Duration (Seconds)", fontsize=10)
-    ax_right.set_ylabel("Throughput (Mbps)", fontsize=10, color="red")
+    ax_right.set_ylabel("Throughput (Mbps)", fontsize=10)
     
-    line1 = ax_right.plot(time_s, throughput, color="red", linewidth=1, label="Throughput")
-    ax_right.tick_params(axis='y', labelcolor="red")
+    line1 = ax_right.plot(time_s, throughput, color="red", linewidth=1, linestyle="-.", label="Throughput")
+    ax_right.tick_params(axis='y')
     
     # Optionally set xlim/ylim
     ax_right.set_xlim(0, 150)
@@ -106,9 +106,9 @@ if not df_falcon.empty:
     
     # Create the twin y-axis for concurrency
     ax2 = ax_right.twinx()
-    ax2.set_ylabel("Concurrency", fontsize=10, color="green")
+    ax2.set_ylabel("Concurrency", fontsize=10)
     line2 = ax2.plot(time_s, concurrency, color="green", linewidth=1, linestyle="--", label="Concurrency")
-    ax2.tick_params(axis='y', labelcolor="green")
+    ax2.tick_params(axis='y')
     ax2.set_ylim(0, 60)
     ax2.set_xlim(0, 150)
 
@@ -117,7 +117,7 @@ if not df_falcon.empty:
     labels = [l.get_label() for l in lines]
     ax_right.legend(lines, labels, loc="best", fontsize=10)
     
-    ax_right.set_title("Falcon (Dual-Axis Plot)")
+    # ax_right.set_title("Falcon (Dual-Axis Plot)")
     ax_right.grid(True, which='both', axis='both', linestyle=':', alpha=0.7)
 else:
     ax_right.text(0.5, 0.5, "Falcon data not found", ha="center", va="center", fontsize=12)
